@@ -27,9 +27,11 @@ export class Dapp extends React.Component {
 
     this.initialState = {
       selectedAddress: undefined,
+      nickname: undefined,
       txBeingSent: undefined,
       transactionError: undefined,
       networkError: undefined,
+      nicknameInput: undefined,
     };
 
     this.state = this.initialState;
@@ -50,18 +52,23 @@ export class Dapp extends React.Component {
       );
     }
 
-    // If the token data or the user's balance hasn't loaded yet, we show
-    // a loading component.
-    // if (!this.state.tokenData || !this.state.balance) {
-    //   return <Loading />;
-    // }
+    if (typeof(this.state.nickname) == undefined) {
+      return <Loading />;
+    }
 
-    // If everything is loaded, we render the application.
     return (
       <div className="container p-4">
         <div className="row">
           <div className="col-12">
             <h1>Whaddup tho</h1>
+            <p>Your wallet address is {this.state.selectedAddress} lol</p>
+            <p>Your nickname is {this.state.nickname} lol</p>
+            <div>
+              <input type="text" value={this.state.nicknameInput} onChange={e => this.setState({nicknameInput: e.target.value})} />
+              <button onClick={() => this._setNickname()} disabled={this.state.nicknameInput == ""} >
+                Set Nickname
+              </button>
+          </div>
           </div>
         </div>
       </div>
@@ -104,6 +111,7 @@ export class Dapp extends React.Component {
     });
 
     this._initializeEthers();
+    this._fetchNickname();
     // this._getTokenData();
     // this._startPollingData();
   }
@@ -129,6 +137,12 @@ export class Dapp extends React.Component {
     this._pollDataInterval = undefined;
   }
 
+  async _fetchNickname() {
+    const nickname = await this._wm.getNickname(this.state.selectedAddress);
+
+    this.setState({ nickname });
+  }
+
   async _getTokenData() {
     const name = await this._token.name();
     const symbol = await this._token.symbol();
@@ -139,6 +153,36 @@ export class Dapp extends React.Component {
   async _updateBalance() {
     const balance = await this._token.balanceOf(this.state.selectedAddress);
     this.setState({ balance });
+  }
+
+  async _setNickname() {
+    try {
+      debugger;
+      console.log(this.state.nicknameInput);
+      this._dismissTransactionError();
+
+      const tx = await this._wm.setNickname(this.state.nicknameInput);
+      this.setState({ txBeingSent: tx.hash });
+
+      const receipt = await tx.wait();
+
+      if (receipt.status === 0) {
+        throw new Error("Transaction failed");
+      }
+
+      // If we got here, the transaction was successful, so you may want to
+      // update your state. Here, we update the user's balance.
+      await this._fetchNickname();
+    } catch (error) {
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
+        return;
+      }
+      console.error(error);
+      this.setState({ transactionError: error });
+    } finally {
+      this.setState({ txBeingSent: undefined });
+    }
+
   }
 
   async _transferTokens(to, amount) {
@@ -229,4 +273,5 @@ export class Dapp extends React.Component {
 
     return false;
   }
+
 }
