@@ -2,7 +2,8 @@ import React from "react";
 
 import { ethers } from "ethers";
 
-import Artifact from "../utils/BackYourselfDev.json";
+import WagerManagerArtifact from "../utils/BackYourselfDev.json";
+import ERC20Artifact from "../utils/ERC20Artifact.json";
 
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
@@ -16,6 +17,8 @@ const HARDHAT_NETWORK_ID = '31337';
 
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
+const WAGER_MANAGER_ADDRESS = "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44";
+
 // This component is in charge of doing these things:
 //   1. It connects to the user's wallet
 //   2. Initializes ethers and the WagerManager contract
@@ -27,11 +30,15 @@ export class Dapp extends React.Component {
 
     this.initialState = {
       selectedAddress: undefined,
+      wantToken: undefined,
       nickname: undefined,
       txBeingSent: undefined,
       transactionError: undefined,
       networkError: undefined,
-      nicknameInput: undefined,
+      nicknameInput: "",
+      newWagerOpponentInput: "",
+      newWagerSizeInput: 0,
+      newWagerDescriptionInput: "",
     };
 
     this.state = this.initialState;
@@ -62,13 +69,21 @@ export class Dapp extends React.Component {
           <div className="col-12">
             <h1>Whaddup tho</h1>
             <p>Your wallet address is {this.state.selectedAddress} lol</p>
-            <p>Your nickname is {this.state.nickname} lol</p>
+            <p>Your nickname is {this.state.nickname}, lol</p>
             <div>
               <input type="text" value={this.state.nicknameInput} onChange={e => this.setState({nicknameInput: e.target.value})} />
               <button onClick={() => this._setNickname()} disabled={this.state.nicknameInput == ""} >
                 Set Nickname
               </button>
-          </div>
+            </div>
+            <div>
+              <input type="text" value={this.state.newWagerOpponentInput} onChange={e => this.setState({newWagerOpponentInput: e.target.value})} />
+              <input type="number" value={this.state.newWagerSizeInput} onChange={e => this.setState({newWagerSizeInput: e.target.value})} />
+              <input type="text" value={this.state.newWagerDescriptionInput} onChange={e => this.setState({newWagerDescriptionInput: e.target.value})} />
+              <button onClick={() => this._createWager(this.state.newWagerOpponentInput, this.state.newWagerSizeInput, this.state.newWagerDescriptionInput)}  >
+                Create Wager
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -120,21 +135,19 @@ export class Dapp extends React.Component {
     this._provider = new ethers.providers.Web3Provider(window.ethereum);
 
     this._wm = new ethers.Contract(
-      "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9", // get the WagerManager deployed address from running Hardhat deploy script
-      Artifact.abi,
+      WAGER_MANAGER_ADDRESS, // get the WagerManager deployed address from running Hardhat deploy script
+      WagerManagerArtifact.abi,
       this._provider.getSigner(0)
     );
-  }
 
-  _startPollingData() {
-    this._pollDataInterval = setInterval(() => this._updateBalance(), 1000);
+    const wantToken = await this._wm.wantToken();
 
-    this._updateBalance();
-  }
+    this._wantToken = new ethers.Contract(
+      wantToken, 
+      ERC20Artifact,
+      this._provider.getSigner(0)
+    );
 
-  _stopPollingData() {
-    clearInterval(this._pollDataInterval);
-    this._pollDataInterval = undefined;
   }
 
   async _fetchNickname() {
@@ -143,21 +156,18 @@ export class Dapp extends React.Component {
     this.setState({ nickname });
   }
 
-  async _getTokenData() {
-    const name = await this._token.name();
-    const symbol = await this._token.symbol();
-
-    this.setState({ tokenData: { name, symbol } });
+  _startPollingData() {
+    this._pollDataInterval = setInterval(() => this._updateBalance(), 1000);
+    this._updateBalance();
   }
 
-  async _updateBalance() {
-    const balance = await this._token.balanceOf(this.state.selectedAddress);
-    this.setState({ balance });
+  _stopPollingData() {
+    clearInterval(this._pollDataInterval);
+    this._pollDataInterval = undefined;
   }
 
   async _setNickname() {
     try {
-      debugger;
       console.log(this.state.nicknameInput);
       this._dismissTransactionError();
 
@@ -182,10 +192,10 @@ export class Dapp extends React.Component {
     } finally {
       this.setState({ txBeingSent: undefined });
     }
-
   }
 
-  async _transferTokens(to, amount) {
+
+  async _createWager(opponent, size, description) {
     // Sending a transaction is a complex operation:
     //   - The user can reject it
     //   - It can fail before reaching the ethereum network (i.e. if the user
@@ -195,50 +205,29 @@ export class Dapp extends React.Component {
     //     transactions immediately, but your dapp should be prepared for
     //     other networks.
     //   - It can fail once mined.
-    //
-    // This method handles all of those things, so keep reading to learn how to
-    // do it.
 
     try {
-      // If a transaction fails, we save that error in the component's state.
-      // We only save one such error, so before sending a second transaction, we
-      // clear it.
       this._dismissTransactionError();
 
-      // We send the transaction, and save its hash in the Dapp's state. This
-      // way we can indicate that we are waiting for it to be mined.
-      const tx = await this._token.transfer(to, amount);
-      this.setState({ txBeingSent: tx.hash });
+      await this._wantToken.approve(WAGER_MANAGER_ADDRESS, ethers.utils.parseUnits(size, 18));
 
-      // We use .wait() to wait for the transaction to be mined. This method
-      // returns the transaction's receipt.
+      const tx = await this._wm.createWager(opponent, ethers.utils.parseUnits(size, 18), description);
+      this.setState({ txBeingSent: tx.hash });
       const receipt = await tx.wait();
 
-      // The receipt, contains a status flag, which is 0 to indicate an error.
-      if (receipt.status === 0) {
-        // We can't know the exact error that made the transaction fail when it
-        // was mined, so we throw this generic one.
-        throw new Error("Transaction failed");
-      }
+      if (receipt.status === 0) { throw new Error("Transaction failed") }
 
-      // If we got here, the transaction was successful, so you may want to
-      // update your state. Here, we update the user's balance.
-      await this._updateBalance();
+      // Todo Grab new state here
+      // await this._updateBalance();
+
     } catch (error) {
-      // We check the error code to see if this error was produced because the
-      // user rejected a tx. If that's the case, we do nothing.
-      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
-        return;
-      }
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) { return }
 
-      // Other errors are logged and stored in the Dapp's state. This is used to
-      // show them to the user, and for debugging.
       console.error(error);
       this.setState({ transactionError: error });
     } finally {
-      // If we leave the try/catch, we aren't sending a tx anymore, so we clear
-      // this part of the state.
       this.setState({ txBeingSent: undefined });
+
     }
   }
 
