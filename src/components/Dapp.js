@@ -8,16 +8,14 @@ import ERC20Artifact from "../utils/ERC20Artifact.json";
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
-import { Transfer } from "./Transfer";
 import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
-import { NoTokensMessage } from "./NoTokensMessage";
 
 const HARDHAT_NETWORK_ID = '31337';
 
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
-const WAGER_MANAGER_ADDRESS = "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44";
+const WAGER_MANAGER_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
 
 // This component is in charge of doing these things:
 //   1. It connects to the user's wallet
