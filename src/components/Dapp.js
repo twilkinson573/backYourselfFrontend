@@ -37,6 +37,7 @@ export class Dapp extends React.Component {
       newWagerOpponentInput: "",
       newWagerSizeInput: 0,
       newWagerDescriptionInput: "",
+      wagers: [],
     };
 
     this.state = this.initialState;
@@ -74,6 +75,7 @@ export class Dapp extends React.Component {
                 Set Nickname
               </button>
             </div>
+            <br />
             <div>
               <input type="text" value={this.state.newWagerOpponentInput} onChange={e => this.setState({newWagerOpponentInput: e.target.value})} />
               <input type="number" value={this.state.newWagerSizeInput} onChange={e => this.setState({newWagerSizeInput: e.target.value})} />
@@ -81,6 +83,14 @@ export class Dapp extends React.Component {
               <button onClick={() => this._createWager(this.state.newWagerOpponentInput, this.state.newWagerSizeInput, this.state.newWagerDescriptionInput)}  >
                 Create Wager
               </button>
+            </div>
+            <br />
+            <div>
+              <ul>
+                {this.state.wagers.map(w => 
+                  <li>{`${w.address1}: ${w.wagerSize}. ${w.description}`}</li>
+                )}
+              </ul>
             </div>
           </div>
         </div>
@@ -125,8 +135,7 @@ export class Dapp extends React.Component {
 
     this._initializeEthers();
     this._fetchNickname();
-    // this._getTokenData();
-    // this._startPollingData();
+    this._startPollingData();
   }
 
   async _initializeEthers() {
@@ -154,9 +163,16 @@ export class Dapp extends React.Component {
     this.setState({ nickname });
   }
 
+  async _fetchWagers() {
+    const wagers = await this._wm.getWagers();
+
+    this.setState({ wagers });
+  }
+
+
   _startPollingData() {
-    this._pollDataInterval = setInterval(() => this._updateBalance(), 1000);
-    this._updateBalance();
+    this._pollDataInterval = setInterval(() => this._fetchWagers(), 1000);
+    this._fetchWagers();
   }
 
   _stopPollingData() {
@@ -192,7 +208,6 @@ export class Dapp extends React.Component {
     }
   }
 
-
   async _createWager(opponent, size, description) {
     // Sending a transaction is a complex operation:
     //   - The user can reject it
@@ -215,8 +230,12 @@ export class Dapp extends React.Component {
 
       if (receipt.status === 0) { throw new Error("Transaction failed") }
 
-      // Todo Grab new state here
-      // await this._updateBalance();
+      await this._fetchWagers();
+      this.setState({
+        newWagerOpponentInput: "",
+        newWagerSizeInput: 0,
+        newWagerDescriptionInput: "",
+      })
 
     } catch (error) {
       if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) { return }
