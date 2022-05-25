@@ -17,11 +17,6 @@ const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
 const WAGER_MANAGER_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
 
-// This component is in charge of doing these things:
-//   1. It connects to the user's wallet
-//   2. Initializes ethers and the WagerManager contract
-//   3. Renders the whole application
-
 export class Dapp extends React.Component {
   constructor(props) {
     super(props);
@@ -85,39 +80,64 @@ export class Dapp extends React.Component {
               </button>
             </div>
             <br />
+
             <div>
+              <h2>Inbox Wages</h2>
               <ul>
-                {this.state.wagers.map(w => 
-                  <li>{`${w.address1}: ${w.wagerSize}. ${w.description}`}</li>
+                {this._getInboxWagers(this.state.wagers).map(w => 
+                  <li key={w.wagerId}>
+                    <div>{w.address1}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>{w.description}</div>
+                  <br />
+                  </li>
                 )}
               </ul>
+              <br />
             </div>
+
+            <div>
+              <h2>Outbox Wages</h2>
+              <ul>
+                {this._getOutboxWagers(this.state.wagers).map(w => 
+                  <li key={w.wagerId}>
+                    <div>{w.address1}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>{w.description}</div>
+                  <br />
+                  </li>
+                )}
+              </ul>
+              <br />
+            </div>
+            
           </div>
         </div>
       </div>
     );
   }
 
+  _getInboxWagers(wagers) {
+    return wagers.filter(w => w.status === 0 && w.address1.toLowerCase() === this.state.selectedAddress)
+  }
+
+  _getOutboxWagers(wagers) {
+    return wagers.filter(w => w.status === 0 && w.address0.toLowerCase() === this.state.selectedAddress)
+  }
+
   componentWillUnmount() {
-    // We poll the user's balance, so we have to stop doing that when Dapp
-    // gets unmounted
-    // this._stopPollingData();
+    this._stopPollingData();
   }
 
   async _connectWallet() {
     const [selectedAddress] = await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-    if (!this._checkNetwork()) {
-      return;
-    }
+    if (!this._checkNetwork()) { return };
 
     this._initialize(selectedAddress);
 
     window.ethereum.on("accountsChanged", ([newAddress]) => {
-      // this._stopPollingData();
-      if (newAddress === undefined) {
-        return this._resetState();
-      }
+      this._stopPollingData();
+      if (newAddress === undefined) { return this._resetState() };
       
       this._initialize(newAddress);
     });
@@ -129,9 +149,7 @@ export class Dapp extends React.Component {
   }
 
   _initialize(userAddress) {
-    this.setState({
-      selectedAddress: userAddress,
-    });
+    this.setState({ selectedAddress: userAddress });
 
     this._initializeEthers();
     this._fetchNickname();
@@ -190,17 +208,11 @@ export class Dapp extends React.Component {
 
       const receipt = await tx.wait();
 
-      if (receipt.status === 0) {
-        throw new Error("Transaction failed");
-      }
+      if (receipt.status === 0) { throw new Error("Transaction failed") };
 
-      // If we got here, the transaction was successful, so you may want to
-      // update your state. Here, we update the user's balance.
       await this._fetchNickname();
     } catch (error) {
-      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
-        return;
-      }
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) { return };
       console.error(error);
       this.setState({ transactionError: error });
     } finally {
@@ -228,7 +240,7 @@ export class Dapp extends React.Component {
       this.setState({ txBeingSent: tx.hash });
       const receipt = await tx.wait();
 
-      if (receipt.status === 0) { throw new Error("Transaction failed") }
+      if (receipt.status === 0) { throw new Error("Transaction failed") };
 
       await this._fetchWagers();
       this.setState({
@@ -238,13 +250,11 @@ export class Dapp extends React.Component {
       })
 
     } catch (error) {
-      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) { return }
-
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) { return };
       console.error(error);
       this.setState({ transactionError: error });
     } finally {
       this.setState({ txBeingSent: undefined });
-
     }
   }
 
@@ -257,9 +267,7 @@ export class Dapp extends React.Component {
   }
 
   _getRpcErrorMessage(error) {
-    if (error.data) {
-      return error.data.message;
-    }
+    if (error.data) { return error.data.message };
 
     return error.message;
   }
@@ -269,13 +277,8 @@ export class Dapp extends React.Component {
   }
 
   _checkNetwork() {
-    if (window.ethereum.networkVersion === HARDHAT_NETWORK_ID) {
-      return true;
-    }
-
-    this.setState({ 
-      networkError: 'Please connect Metamask to Localhost:8545'
-    });
+    if (window.ethereum.networkVersion === HARDHAT_NETWORK_ID) { return true };
+    this.setState({ networkError: 'Please connect Metamask to Localhost:8545' });
 
     return false;
   }
