@@ -66,7 +66,7 @@ export class Dapp extends React.Component {
             <p>Your nickname is {this.state.nickname}, lol</p>
             <div>
               <input type="text" value={this.state.nicknameInput} onChange={e => this.setState({nicknameInput: e.target.value})} />
-              <button onClick={() => this._setNickname()} disabled={this.state.nicknameInput == ""} >
+              <button onClick={() => this._setNickname()} disabled={this.state.nicknameInput === ""} >
                 Set Nickname
               </button>
             </div>
@@ -82,14 +82,14 @@ export class Dapp extends React.Component {
             <br />
 
             <div>
-              <h2>Inbox Wages</h2>
+              <h2>Inbox Wagers</h2>
               <ul>
                 {this._getInboxWagers(this.state.wagers).map(w => 
                   <li key={w.wagerId}>
+                    <div>{Number(w.wagerId)}</div>
                     <div>{w.address1}</div>
                     <div>${ethers.utils.formatEther(w.wagerSize)}</div>
                     <div>{w.description}</div>
-                  <br />
                   </li>
                 )}
               </ul>
@@ -97,20 +97,103 @@ export class Dapp extends React.Component {
             </div>
 
             <div>
-              <h2>Outbox Wages</h2>
+              <h2>Outbox Wagers</h2>
               <ul>
                 {this._getOutboxWagers(this.state.wagers).map(w => 
-                  <li key={w.wagerId}>
+                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+                    <div>{Number(w.wagerId)}</div>
                     <div>{w.address1}</div>
                     <div>${ethers.utils.formatEther(w.wagerSize)}</div>
                     <div>{w.description}</div>
-                  <br />
                   </li>
                 )}
               </ul>
               <br />
             </div>
-            
+
+            <div>
+              <h2>Active Wagers</h2>
+              <ul>
+                {this._getActiveWagers(this.state.wagers).map(w => 
+                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+                    <div>{Number(w.wagerId)}</div>
+                    <div>{w.address1}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>{w.description}</div>
+                  </li>
+                )}
+              </ul>
+              <br />
+            </div>
+
+            <div>
+              <h2>Complete Wagers</h2>
+              <p>Wagers You Won!</p>
+              <ul>
+                {this._getWonCompleteWagers(this.state.wagers).map(w => 
+                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+                    <div>{Number(w.wagerId)}</div>
+                    <div>{w.address1}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>{w.description}</div>
+                  </li>
+                )}
+              </ul>
+              <br />
+              <p>Wagers You Lost :(</p>
+              <ul>
+                {this._getLostCompleteWagers(this.state.wagers).map(w => 
+                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+                    <div>{Number(w.wagerId)}</div>
+                    <div>{w.address1}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>{w.description}</div>
+                  </li>
+                )}
+              </ul>
+              <br />
+              <p>Disputed Wagers</p>
+              <ul>
+                {this._getDisputedCompleteWagers(this.state.wagers).map(w => 
+                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+                    <div>{Number(w.wagerId)}</div>
+                    <div>{w.address1}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>{w.description}</div>
+                  </li>
+                )}
+              </ul>
+              <br />
+            </div>
+
+            <div>
+              <h2>Declined Wagers</h2>
+              <p>Wagers You Declined</p>
+              <ul>
+                {this._getSelfDeclinedWagers(this.state.wagers).map(w => 
+                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+                    <div>{Number(w.wagerId)}</div>
+                    <div>{w.address1}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>{w.description}</div>
+                  </li>
+                )}
+              </ul>
+              <br />
+              <p>Wagers Opponents Declined</p>
+              <ul>
+                {this._getOpponentDeclinedWagers(this.state.wagers).map(w => 
+                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+                    <div>{Number(w.wagerId)}</div>
+                    <div>{w.address1}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>{w.description}</div>
+                  </li>
+                )}
+              </ul>
+              <br />
+            </div>
+
           </div>
         </div>
       </div>
@@ -124,6 +207,70 @@ export class Dapp extends React.Component {
   _getOutboxWagers(wagers) {
     return wagers.filter(w => w.status === 0 && w.address0.toLowerCase() === this.state.selectedAddress)
   }
+
+  _getActiveWagers(wagers) {
+    let address0Matches = wagers.filter(
+      w => w.status === 2 && 
+      w.address0.toLowerCase() === this.state.selectedAddress && 
+      w.address0Verdict === 0
+    )
+    let address1Matches = wagers.filter(
+      w => w.status === 2 && 
+      w.address1.toLowerCase() === this.state.selectedAddress && 
+      w.address1Verdict === 0
+    )
+
+    return [...address0Matches, ...address1Matches];
+  }
+
+  _getWonCompleteWagers(wagers) {
+    let address0Matches = wagers.filter(
+      w => w.status === 3 && 
+      w.address0Verdict === w.address1Verdict &&
+      w.address0.toLowerCase() === this.state.selectedAddress && 
+      w.address0Verdict === 2
+    )
+
+    let address1Matches = wagers.filter(
+      w => w.status === 3 && 
+      w.address0Verdict === w.address1Verdict &&
+      w.address1.toLowerCase() === this.state.selectedAddress && 
+      w.address1Verdict === 2
+    )
+
+    return [...address0Matches, ...address1Matches];
+  }
+
+  _getLostCompleteWagers(wagers) {
+    let address0Matches = wagers.filter(
+      w => w.status === 3 && 
+      w.address0Verdict === w.address1Verdict &&
+      w.address0.toLowerCase() === this.state.selectedAddress && 
+      w.address0Verdict === 1
+    )
+
+    let address1Matches = wagers.filter(
+      w => w.status === 3 && 
+      w.address0Verdict === w.address1Verdict &&
+      w.address1.toLowerCase() === this.state.selectedAddress && 
+      w.address1Verdict === 1
+    )
+
+    return [...address0Matches, ...address1Matches];
+  }
+
+  _getDisputedCompleteWagers(wagers) {
+    return wagers.filter(w => w.status === 3 && w.address0Verdict !== w.address1Verdict)
+  }
+
+  _getOpponentDeclinedWagers(wagers) {
+    return wagers.filter(w => w.status === 1 && w.address0.toLowerCase() === this.state.selectedAddress)
+  }
+
+  _getSelfDeclinedWagers(wagers) {
+    return wagers.filter(w => w.status === 1 && w.address1.toLowerCase() === this.state.selectedAddress)
+  }
+
 
   componentWillUnmount() {
     this._stopPollingData();
