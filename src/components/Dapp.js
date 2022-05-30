@@ -90,6 +90,12 @@ export class Dapp extends React.Component {
                     <div>{w.address1}</div>
                     <div>${ethers.utils.formatEther(w.wagerSize)}</div>
                     <div>{w.description}</div>
+                      <button onClick={() => this._provideWagerResponse(Number(w.wagerId), w.wagerSize, 2)} >
+                        Accept Wager
+                      </button>
+                      <button onClick={() => this._provideWagerResponse(Number(w.wagerId), w.wagerSize, 1)} >
+                        Decline Wager
+                      </button>
                   </li>
                 )}
               </ul>
@@ -120,6 +126,7 @@ export class Dapp extends React.Component {
                     <div>{w.address1}</div>
                     <div>${ethers.utils.formatEther(w.wagerSize)}</div>
                     <div>{w.description}</div>
+                    {/* todo1 Add I won / I lost -- Awaiting opponent response here*/}
                   </li>
                 )}
               </ul>
@@ -395,6 +402,29 @@ export class Dapp extends React.Component {
         newWagerSizeInput: 0,
         newWagerDescriptionInput: "",
       })
+
+    } catch (error) {
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) { return };
+      console.error(error);
+      this.setState({ transactionError: error });
+    } finally {
+      this.setState({ txBeingSent: undefined });
+    }
+  }
+
+  async _provideWagerResponse(wagerId, wagerSize, response) {
+    try {
+      this._dismissTransactionError();
+
+      await this._wantToken.approve(WAGER_MANAGER_ADDRESS, ethers.utils.parseUnits(ethers.utils.formatEther(wagerSize)));
+
+      const tx = await this._wm.provideWagerResponse(wagerId, response);
+      this.setState({ txBeingSent: tx.hash });
+      const receipt = await tx.wait();
+
+      if (receipt.status === 0) { throw new Error("Transaction failed") };
+
+      await this._fetchWagers();
 
     } catch (error) {
       if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) { return };
