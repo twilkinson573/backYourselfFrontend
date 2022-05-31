@@ -306,7 +306,7 @@ export class Dapp extends React.Component {
     this.setState({ selectedAddress: userAddress });
 
     this._initializeEthers();
-    this._fetchNickname();
+    this._fetchUserNickname();
     this._startPollingData();
   }
 
@@ -329,13 +329,13 @@ export class Dapp extends React.Component {
 
   }
 
-  async _fetchNickname() {
+  async _fetchUserNickname() {
     const nickname = await this._wm.getNickname(this.state.selectedAddress);
 
     this.setState({ nickname });
   }
 
-  async _fetchWagers() {
+  async _fetchUserWagers() {
     const wagers = await this._wm.getWagers();
 
     this.setState({ wagers });
@@ -343,8 +343,8 @@ export class Dapp extends React.Component {
 
 
   _startPollingData() {
-    this._pollDataInterval = setInterval(() => this._fetchWagers(), 1000);
-    this._fetchWagers();
+    this._pollDataInterval = setInterval(() => this._fetchUserWagers(), 1000);
+    this._fetchUserWagers();
   }
 
   _stopPollingData() {
@@ -364,7 +364,7 @@ export class Dapp extends React.Component {
 
       if (receipt.status === 0) { throw new Error("Transaction failed") };
 
-      await this._fetchNickname();
+      await this._fetchUserNickname();
     } catch (error) {
       if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) { return };
       console.error(error);
@@ -396,7 +396,7 @@ export class Dapp extends React.Component {
 
       if (receipt.status === 0) { throw new Error("Transaction failed") };
 
-      await this._fetchWagers();
+      await this._fetchUserWagers();
       this.setState({
         newWagerOpponentInput: "",
         newWagerSizeInput: 0,
@@ -424,7 +424,7 @@ export class Dapp extends React.Component {
 
       if (receipt.status === 0) { throw new Error("Transaction failed") };
 
-      await this._fetchWagers();
+      await this._fetchUserWagers();
 
     } catch (error) {
       if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) { return };
