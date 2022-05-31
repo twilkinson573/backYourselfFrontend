@@ -83,13 +83,13 @@ export class Dapp extends React.Component {
             <br />
 
             <div>
-              <h2>Inbox Wagers</h2>
+              <h2>You've been Challenged!</h2>
               <ul>
                 {this._getInboxWagers(this.state.wagers).map(w => 
                   <li key={w.wagerId}>
                     <div>{Number(w.wagerId)}</div>
                     <div>{this.state.nicknames[w.address1] ? this.state.nicknames[w.address1] : w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
                     <div>{w.description}</div>
                       <button onClick={() => this._provideWagerResponse(Number(w.wagerId), w.wagerSize, 2)} >
                         Accept Wager
@@ -104,13 +104,13 @@ export class Dapp extends React.Component {
             </div>
 
             <div>
-              <h2>Outbox Wagers</h2>
+              <h2>Awaiting Opponent's Response</h2>
               <ul>
                 {this._getOutboxWagers(this.state.wagers).map(w => 
                   <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
                     <div>{Number(w.wagerId)}</div>
-                    <div>{this.state.nicknames[w.address1] ? this.state.nicknames[w.address1] : w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div style={{flexBasis: "70%"}}>{w.address1} {this.state.nicknames[w.address1]}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
                     <div>{w.description}</div>
                   </li>
                 )}
@@ -125,9 +125,36 @@ export class Dapp extends React.Component {
                   <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
                     <div>{Number(w.wagerId)}</div>
                     <div>{w.address1}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
+                    <div>{w.description}</div>
+                    {(
+                      (w.address0.toLowerCase() === this.state.selectedAddress && w.address0Verdict === 0) || 
+                      (w.address1.toLowerCase() === this.state.selectedAddress && w.address1Verdict === 0)
+                    ) &&
+                      <div>
+                        <button onClick={() => this._provideWagerVerdict(Number(w.wagerId), 2)} >
+                          I Won!
+                        </button>
+                        <button onClick={() => this._provideWagerVerdict(Number(w.wagerId), 1)} >
+                          I Lost :(
+                        </button>
+                      </div>
+                    }
+                  </li>
+                )}
+              </ul>
+              <br />
+            </div>
+
+            <div>
+              <h2>Awaiting Opponent's Verdict</h2>
+              <ul>
+                {this._getAwaitingVerdictWagers(this.state.wagers).map(w => 
+                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+                    <div>{Number(w.wagerId)}</div>
+                    <div style={{flexBasis: "70%"}}>{w.address1} {this.state.nicknames[w.address1]}</div>
                     <div>${ethers.utils.formatEther(w.wagerSize)}</div>
                     <div>{w.description}</div>
-                    {/* todo1 Add I won / I lost -- Awaiting opponent response here*/}
                   </li>
                 )}
               </ul>
@@ -142,7 +169,7 @@ export class Dapp extends React.Component {
                   <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
                     <div>{Number(w.wagerId)}</div>
                     <div>{w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
                     <div>{w.description}</div>
                   </li>
                 )}
@@ -154,7 +181,7 @@ export class Dapp extends React.Component {
                   <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
                     <div>{Number(w.wagerId)}</div>
                     <div>{w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
                     <div>{w.description}</div>
                   </li>
                 )}
@@ -166,7 +193,7 @@ export class Dapp extends React.Component {
                   <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
                     <div>{Number(w.wagerId)}</div>
                     <div>{w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
                     <div>{w.description}</div>
                   </li>
                 )}
@@ -182,7 +209,7 @@ export class Dapp extends React.Component {
                   <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
                     <div>{Number(w.wagerId)}</div>
                     <div>{w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
                     <div>{w.description}</div>
                   </li>
                 )}
@@ -194,7 +221,7 @@ export class Dapp extends React.Component {
                   <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
                     <div>{Number(w.wagerId)}</div>
                     <div>{w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
+                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
                     <div>{w.description}</div>
                   </li>
                 )}
@@ -233,17 +260,32 @@ export class Dapp extends React.Component {
     return [...address0Matches, ...address1Matches];
   }
 
+  _getAwaitingVerdictWagers(wagers) {
+    let address0Matches = wagers.filter(w => 
+      w.status === 2 &&
+      w.address0.toLowerCase() === this.state.selectedAddress && 
+      w.address0Verdict !== 0
+    )
+    let address1Matches = wagers.filter(w => 
+      w.status === 2 &&
+      w.address1.toLowerCase() === this.state.selectedAddress && 
+      w.address1Verdict !== 0
+    )
+
+    return [...address0Matches, ...address1Matches];
+  }
+
   _getWonCompleteWagers(wagers) {
     let address0Matches = wagers.filter(w => 
       w.status === 3 &&
-      w.address0Verdict === w.address1Verdict &&
+      w.address0Verdict !== w.address1Verdict &&
       w.address0.toLowerCase() === this.state.selectedAddress && 
       w.address0Verdict === 2
     )
 
     let address1Matches = wagers.filter(w => 
       w.status === 3 &&
-      w.address0Verdict === w.address1Verdict &&
+      w.address0Verdict !== w.address1Verdict &&
       w.address1.toLowerCase() === this.state.selectedAddress && 
       w.address1Verdict === 2
     )
@@ -254,14 +296,14 @@ export class Dapp extends React.Component {
   _getLostCompleteWagers(wagers) {
     let address0Matches = wagers.filter(w => 
       w.status === 3 && 
-      w.address0Verdict === w.address1Verdict &&
+      w.address0Verdict !== w.address1Verdict &&
       w.address0.toLowerCase() === this.state.selectedAddress && 
       w.address0Verdict === 1
     )
 
     let address1Matches = wagers.filter(w => 
       w.status === 3 && 
-      w.address0Verdict === w.address1Verdict &&
+      w.address0Verdict !== w.address1Verdict &&
       w.address1.toLowerCase() === this.state.selectedAddress && 
       w.address1Verdict === 1
     )
@@ -270,7 +312,7 @@ export class Dapp extends React.Component {
   }
 
   _getDisputedCompleteWagers(wagers) {
-    return wagers.filter(w => w.status === 3 && w.address0Verdict !== w.address1Verdict)
+    return wagers.filter(w => w.status === 3 && w.address0Verdict === w.address1Verdict)
   }
 
   _getOpponentDeclinedWagers(wagers) {
@@ -373,11 +415,11 @@ export class Dapp extends React.Component {
     this.setState({ wagers });
   }
 
-  _startPollingData() {
+  async _startPollingData() {
     this._pollDataInterval1 = setInterval(() => this._fetchUserWagers(), 1000);
-    this._fetchUserWagers();
+    await this._fetchUserWagers();
 
-    this._pollDataInterval2 = setInterval(() => this._fetchNicknames(), 1000);
+    this._pollDataInterval2 = setInterval(() => this._fetchNicknames(), 30000);
     this._fetchNicknames();
   }
 
@@ -455,6 +497,27 @@ export class Dapp extends React.Component {
       await this._wantToken.approve(WAGER_MANAGER_ADDRESS, ethers.utils.parseUnits(ethers.utils.formatEther(wagerSize)));
 
       const tx = await this._wm.provideWagerResponse(wagerId, response);
+      this.setState({ txBeingSent: tx.hash });
+      const receipt = await tx.wait();
+
+      if (receipt.status === 0) { throw new Error("Transaction failed") };
+
+      await this._fetchUserWagers();
+
+    } catch (error) {
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) { return };
+      console.error(error);
+      this.setState({ transactionError: error });
+    } finally {
+      this.setState({ txBeingSent: undefined });
+    }
+  }
+
+  async _provideWagerVerdict(wagerId, verdict) {
+    try {
+      this._dismissTransactionError();
+
+      const tx = await this._wm.provideWagerVerdict(wagerId, verdict);
       this.setState({ txBeingSent: tx.hash });
       const receipt = await tx.wait();
 
