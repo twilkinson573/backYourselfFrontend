@@ -62,8 +62,8 @@ export class Dapp extends React.Component {
       <div className="container p-4">
         <div className="row">
           <div className="col-12">
-            <h1>Whaddup tho</h1>
-            <p>Your wallet address is {this.state.selectedAddress} lol</p>
+            <h1>Back Yourself 💸</h1>
+            <p>The Wagering Dapp - challenge your friends with USDC in escrow, winner takes all!</p>
             <p>Your nickname is {this.state.userNickname}, lol</p>
             <div>
               <input type="text" value={this.state.nicknameInput} onChange={e => this.setState({nicknameInput: e.target.value})} />
@@ -375,9 +375,9 @@ export class Dapp extends React.Component {
   }
 
   async _fetchUserNickname() {
-    const nickname = await this._wm.getNickname(this.state.selectedAddress);
+    const userNickname = await this._wm.getNickname(this.state.selectedAddress);
 
-    this.setState({ nickname });
+    this.setState({ userNickname });
   }
 
   async _fetchNicknames() {
