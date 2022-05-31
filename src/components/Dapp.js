@@ -24,7 +24,8 @@ export class Dapp extends React.Component {
     this.initialState = {
       selectedAddress: undefined,
       wantToken: undefined,
-      nickname: undefined,
+      userNickname: undefined,
+      nicknames: {},
       txBeingSent: undefined,
       transactionError: undefined,
       networkError: undefined,
@@ -53,7 +54,7 @@ export class Dapp extends React.Component {
       );
     }
 
-    if (typeof(this.state.nickname) == undefined) {
+    if (typeof(this.state.userNickname) == undefined) {
       return <Loading />;
     }
 
@@ -63,11 +64,11 @@ export class Dapp extends React.Component {
           <div className="col-12">
             <h1>Whaddup tho</h1>
             <p>Your wallet address is {this.state.selectedAddress} lol</p>
-            <p>Your nickname is {this.state.nickname}, lol</p>
+            <p>Your nickname is {this.state.userNickname}, lol</p>
             <div>
               <input type="text" value={this.state.nicknameInput} onChange={e => this.setState({nicknameInput: e.target.value})} />
-              <button onClick={() => this._setNickname()} disabled={this.state.nicknameInput === ""} >
-                Set Nickname
+              <button onClick={() => this._setUserNickname()} disabled={this.state.nicknameInput === ""} >
+                Update Your Nickname
               </button>
             </div>
             <br />
@@ -87,7 +88,7 @@ export class Dapp extends React.Component {
                 {this._getInboxWagers(this.state.wagers).map(w => 
                   <li key={w.wagerId}>
                     <div>{Number(w.wagerId)}</div>
-                    <div>{w.address1}</div>
+                    <div>{this.state.nicknames[w.address1] ? this.state.nicknames[w.address1] : w.address1}</div>
                     <div>${ethers.utils.formatEther(w.wagerSize)}</div>
                     <div>{w.description}</div>
                       <button onClick={() => this._provideWagerResponse(Number(w.wagerId), w.wagerSize, 2)} >
@@ -108,7 +109,7 @@ export class Dapp extends React.Component {
                 {this._getOutboxWagers(this.state.wagers).map(w => 
                   <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
                     <div>{Number(w.wagerId)}</div>
-                    <div>{w.address1}</div>
+                    <div>{this.state.nicknames[w.address1] ? this.state.nicknames[w.address1] : w.address1}</div>
                     <div>${ethers.utils.formatEther(w.wagerSize)}</div>
                     <div>{w.description}</div>
                   </li>
@@ -207,6 +208,8 @@ export class Dapp extends React.Component {
     );
   }
 
+
+
   _getInboxWagers(wagers) {
     return wagers.filter(w => w.status === 0 && w.address1.toLowerCase() === this.state.selectedAddress)
   }
@@ -216,13 +219,13 @@ export class Dapp extends React.Component {
   }
 
   _getActiveWagers(wagers) {
-    let address0Matches = wagers.filter(
-      w => w.status === 2 && 
+    let address0Matches = wagers.filter(w => 
+      w.status === 2 &&
       w.address0.toLowerCase() === this.state.selectedAddress && 
       w.address0Verdict === 0
     )
-    let address1Matches = wagers.filter(
-      w => w.status === 2 && 
+    let address1Matches = wagers.filter(w => 
+      w.status === 2 &&
       w.address1.toLowerCase() === this.state.selectedAddress && 
       w.address1Verdict === 0
     )
@@ -231,15 +234,15 @@ export class Dapp extends React.Component {
   }
 
   _getWonCompleteWagers(wagers) {
-    let address0Matches = wagers.filter(
-      w => w.status === 3 && 
+    let address0Matches = wagers.filter(w => 
+      w.status === 3 &&
       w.address0Verdict === w.address1Verdict &&
       w.address0.toLowerCase() === this.state.selectedAddress && 
       w.address0Verdict === 2
     )
 
-    let address1Matches = wagers.filter(
-      w => w.status === 3 && 
+    let address1Matches = wagers.filter(w => 
+      w.status === 3 &&
       w.address0Verdict === w.address1Verdict &&
       w.address1.toLowerCase() === this.state.selectedAddress && 
       w.address1Verdict === 2
@@ -249,15 +252,15 @@ export class Dapp extends React.Component {
   }
 
   _getLostCompleteWagers(wagers) {
-    let address0Matches = wagers.filter(
-      w => w.status === 3 && 
+    let address0Matches = wagers.filter(w => 
+      w.status === 3 && 
       w.address0Verdict === w.address1Verdict &&
       w.address0.toLowerCase() === this.state.selectedAddress && 
       w.address0Verdict === 1
     )
 
-    let address1Matches = wagers.filter(
-      w => w.status === 3 && 
+    let address1Matches = wagers.filter(w => 
+      w.status === 3 && 
       w.address0Verdict === w.address1Verdict &&
       w.address1.toLowerCase() === this.state.selectedAddress && 
       w.address1Verdict === 1
@@ -335,24 +338,57 @@ export class Dapp extends React.Component {
     this.setState({ nickname });
   }
 
+  async _fetchNicknames() {
+    let addresses = [
+      ...this.state.wagers.map(w => w.address0).filter(a => a !== this.state.SelectedAddress), 
+      ...this.state.wagers.map(w => w.address1).filter(a => a !== this.state.SelectedAddress)
+    ]
+    let uniqueAddresses = [...new Set(addresses)];
+
+    let nicknames = {};
+
+    uniqueAddresses.forEach(async a =>
+      nicknames[a] = await this._fetchNickname(a)
+    )
+
+    this.setState({ nicknames })
+
+  }
+
+  async _fetchNickname(address) {
+    if(!localStorage.getItem(address) || localStorage.getItem(address).length === 0 ) {
+      const nickname = await this._wm.getNickname(address); 
+      localStorage.setItem(address, nickname);
+      return nickname
+
+    } else {
+      return localStorage.getItem(address)
+
+    }
+  }
+
   async _fetchUserWagers() {
     const wagers = await this._wm.getWagers();
 
     this.setState({ wagers });
   }
 
-
   _startPollingData() {
-    this._pollDataInterval = setInterval(() => this._fetchUserWagers(), 1000);
+    this._pollDataInterval1 = setInterval(() => this._fetchUserWagers(), 1000);
     this._fetchUserWagers();
+
+    this._pollDataInterval2 = setInterval(() => this._fetchNicknames(), 1000);
+    this._fetchNicknames();
   }
 
   _stopPollingData() {
-    clearInterval(this._pollDataInterval);
-    this._pollDataInterval = undefined;
+    clearInterval(this._pollDataInterval1);
+    clearInterval(this._pollDataInterval2);
+    this._pollDataInterval1 = undefined;
+    this._pollDataInterval2 = undefined;
   }
 
-  async _setNickname() {
+  async _setUserNickname() {
     try {
       console.log(this.state.nicknameInput);
       this._dismissTransactionError();
