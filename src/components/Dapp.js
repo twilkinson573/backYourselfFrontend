@@ -2,7 +2,7 @@ import React from "react";
 
 import { ethers } from "ethers";
 
-import WagerManagerArtifact from "../utils/BackYourselfDev.json";
+import WagerManagerArtifact from "../utils/WagerManager.json";
 import ERC20Artifact from "../utils/ERC20Artifact.json";
 
 import { NoWalletDetected } from "./NoWalletDetected";
