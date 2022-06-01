@@ -19,13 +19,13 @@ export function ConnectWallet({ connectWallet, networkError, dismiss }) {
           <h1>Back Yourself <span role='img' aria-label='money'>💸</span></h1>
           <p>The Wagering Dapp - challenge your friends with USDC in escrow, winner takes all!</p>
 
-          <p>Please connect to your wallet.</p>
+          <p>Please connect to your wallet on the Polygon network.</p>
           <button
             className="btn btn-warning"
             type="button"
             onClick={connectWallet}
           >
-            Connect Wallet
+            Connect Polygon Wallet
           </button>
         </div>
       </div>
