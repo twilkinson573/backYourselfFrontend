@@ -8,8 +8,8 @@ import ERC20Artifact from "../utils/ERC20Artifact.json";
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
-import { TransactionErrorMessage } from "./TransactionErrorMessage";
-import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
+// import { TransactionErrorMessage } from "./TransactionErrorMessage";
+// import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 
 const HARDHAT_NETWORK_ID = '31337';
 
@@ -62,7 +62,7 @@ export class Dapp extends React.Component {
       <div className="container p-4">
         <div className="row">
           <div className="col-12">
-            <h1>Back Yourself 💸</h1>
+            <h1>Back Yourself <span role='img' aria-label='money'>💸</span></h1>
             <p>The Wagering Dapp - challenge your friends with USDC in escrow, winner takes all!</p>
             <p>Your nickname is {this.state.userNickname}, lol</p>
             <div>

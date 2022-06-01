@@ -16,7 +16,7 @@ export function ConnectWallet({ connectWallet, networkError, dismiss }) {
           )}
         </div>
         <div className="col-6 p-4 text-center">
-          <h1>Back Yourself 💸</h1>
+          <h1>Back Yourself <span role='img' aria-label='money'>💸</span></h1>
           <p>The Wagering Dapp - challenge your friends with USDC in escrow, winner takes all!</p>
 
           <p>Please connect to your wallet.</p>
