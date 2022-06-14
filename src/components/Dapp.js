@@ -16,7 +16,7 @@ const POLYGON_NETWORK_ID = '137';
 
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
-const WAGER_MANAGER_ADDRESS = "0x86D9573C91c221a9563C0f67f216430c074A56Fc";
+const WAGER_MANAGER_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
 
 export class Dapp extends React.Component {
   constructor(props) {
@@ -65,6 +65,11 @@ export class Dapp extends React.Component {
           <div className="col-12">
             <h1>Back Yourself <span role='img' aria-label='money'>💸</span></h1>
             <p>The Wagering Dapp - challenge your friends with USDC in escrow, winner takes all!</p>
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="col-12">
             <p>Your nickname is {this.state.userNickname}, lol</p>
             <div>
               <input type="text" value={this.state.nicknameInput} onChange={e => this.setState({nicknameInput: e.target.value})} />
@@ -72,7 +77,12 @@ export class Dapp extends React.Component {
                 Update Your Nickname
               </button>
             </div>
+          </div>
+        </div>
+
             <br />
+        <div className="row">
+          <div className="col-12">
             <div>
               <input type="text" value={this.state.newWagerOpponentInput} onChange={e => this.setState({newWagerOpponentInput: e.target.value})} />
               <input type="number" value={this.state.newWagerSizeInput} onChange={e => this.setState({newWagerSizeInput: e.target.value})} />
@@ -81,15 +91,20 @@ export class Dapp extends React.Component {
                 Create Wager
               </button>
             </div>
+          </div>
+        </div>
+
             <br />
 
+        <div className="row">
+          <div className="col-12">
             <div>
               <h2>You've been Challenged!</h2>
               <ul>
                 {this._getInboxWagers(this.state.wagers).map(w => 
                   <li key={w.wagerId}>
                     <div>{Number(w.wagerId)}</div>
-                    <div>{this.state.nicknames[w.address1] ? this.state.nicknames[w.address1] : w.address1}</div>
+                    <div>{this.state.nicknames[w.address0] ? this.state.nicknames[w.address0] : w.address0}</div>
                     <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
                     <div>{w.description}</div>
                       <button onClick={() => this._provideWagerResponse(Number(w.wagerId), w.wagerSize, 2)} >
@@ -101,9 +116,14 @@ export class Dapp extends React.Component {
                   </li>
                 )}
               </ul>
-              <br />
             </div>
+          </div>
+        </div>
 
+              <br />
+              
+        <div className="row">
+          <div className="col-12">
             <div>
               <h2>Awaiting Opponent's Response</h2>
               <ul>
@@ -118,7 +138,11 @@ export class Dapp extends React.Component {
               </ul>
               <br />
             </div>
+          </div>
+        </div>
 
+        <div className="row">
+          <div className="col-12">
             <div>
               <h2>Active Wagers</h2>
               <ul>
@@ -147,6 +171,8 @@ export class Dapp extends React.Component {
               <br />
             </div>
 
+        <div className="row">
+          <div className="col-12">
             <div>
               <h2>Awaiting Opponent's Verdict</h2>
               <ul>
@@ -161,7 +187,11 @@ export class Dapp extends React.Component {
               </ul>
               <br />
             </div>
+          </div>
+        </div>
 
+        <div className="row">
+          <div className="col-12">
             <div>
               <h2>Complete Wagers</h2>
               <p>Wagers You Won!</p>
@@ -201,7 +231,11 @@ export class Dapp extends React.Component {
               </ul>
               <br />
             </div>
+          </div>
+        </div>
 
+        <div className="row">
+          <div className="col-12">
             <div>
               <h2>Declined Wagers</h2>
               <p>Wagers You Declined</p>
@@ -229,6 +263,8 @@ export class Dapp extends React.Component {
               </ul>
               <br />
             </div>
+          </div>
+        </div>
 
           </div>
         </div>
@@ -554,7 +590,7 @@ export class Dapp extends React.Component {
   }
 
   _checkNetwork() {
-    if (window.ethereum.networkVersion === POLYGON_NETWORK_ID) { return true };
+    if (window.ethereum.networkVersion === HARDHAT_NETWORK_ID) { return true };
     this.setState({ networkError: 'Please connect Metamask to Polygon' });
 
     return false;
