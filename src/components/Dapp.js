@@ -627,7 +627,7 @@ export class Dapp extends React.Component {
   }
 
   _checkNetwork() {
-    if (window.ethereum.networkVersion === HARDHAT_NETWORK_ID) { return true };
+    if (window.ethereum.networkVersion === POLYGON_NETWORK_ID) { return true };
     this.setState({ networkError: 'Please connect Metamask to Polygon' });
 
     return false;
