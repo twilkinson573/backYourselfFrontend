@@ -3,9 +3,10 @@ import { ethers } from "ethers";
 
 export function WagerItem({w, provideWagerResponse, provideWagerVerdict, requiresResponse, requiresVerdict, nicknames, selectedAddress}) {
   return (
-    <li style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+    <li className="row">
       <div>{Number(w.wagerId)}</div>
-      <div>{nicknames[w.address0] ? nicknames[w.address0] : w.address0}</div>
+      <div>🗡 {nicknames[w.address0] ? nicknames[w.address0] : w.address0}</div>
+      <div>🛡 {nicknames[w.address1] ? nicknames[w.address1] : w.address1}</div>
       <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
       <div>{w.description}</div>
 

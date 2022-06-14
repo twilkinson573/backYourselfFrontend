@@ -86,10 +86,10 @@ export class Dapp extends React.Component {
           <div className="col-6">
             <h4>Create a new Wager</h4>
             <div style={{display:"flex", flexDirection:"column"}}>
-              <span>Paste Opponent's Polygon Address</span>
+              <span>Paste your opponent's Polygon address</span>
               <input 
                 type="text" 
-                placeholder="Paste Opponent's MATIC Address"
+                placeholder="0x...."
                 value={this.state.newWagerOpponentInput} 
                 onChange={e => this.setState({newWagerOpponentInput: e.target.value})} 
               />
@@ -120,7 +120,7 @@ export class Dapp extends React.Component {
         <div className="row">
           <div className="col-12">
             <div>
-              <h2>You've been Challenged!</h2>
+              <h4>You've been Challenged!</h4>
               <p>People have challenged you to the following wagers, you must now accept or decline</p>
               <p>If you accept, you will be prompted to escrow your stake in USDC and the challenge will be live 🥊</p>
               <ul>
@@ -131,7 +131,7 @@ export class Dapp extends React.Component {
                     nicknames={this.state.nicknames}
                     requiresResponse={true}
                     requiresVerdict={false}
-                    provideWagerResponse={() => this._provideWagerResponse()} 
+                    provideWagerResponse={this._provideWagerResponse} 
                   />
                 )}
               </ul>
@@ -143,7 +143,7 @@ export class Dapp extends React.Component {
         <div className="row">
           <div className="col-12">
             <div>
-              <h2>Awaiting Opponent's Response</h2>
+              <h4>Awaiting Opponent's Response</h4>
               <ul>
                 {this._getOutboxWagers(this.state.wagers).map(w => 
                   <WagerItem 
@@ -163,7 +163,7 @@ export class Dapp extends React.Component {
         <div className="row">
           <div className="col-12">
             <div>
-              <h2>Active Wagers</h2>
+              <h4>Active Wagers</h4>
               <ul>
                 {this._getActiveWagers(this.state.wagers).map(w => 
                   <WagerItem 
@@ -172,7 +172,8 @@ export class Dapp extends React.Component {
                     nicknames={this.state.nicknames}
                     requiresResponse={false}
                     requiresVerdict={true}
-                    provideWagerVerdict={() => this._provideWagerVerdict()} 
+                    provideWagerVerdict={this._provideWagerVerdict} 
+                    selectedAddress={this.state.selectedAddress}
                   />
                 )}
               </ul>
@@ -184,7 +185,7 @@ export class Dapp extends React.Component {
         <div className="row">
           <div className="col-12">
             <div>
-              <h2>Awaiting Opponent's Verdict</h2>
+              <h4>Awaiting Opponent's Verdict</h4>
               <ul>
                 {this._getAwaitingVerdictWagers(this.state.wagers).map(w => 
                   <WagerItem 
@@ -204,7 +205,7 @@ export class Dapp extends React.Component {
         <div className="row">
           <div className="col-12">
             <div>
-              <h2>Complete Wagers</h2>
+              <h4>Complete Wagers</h4>
               <p>Wagers You Won - Your Glorious Pantheon of Success! 🏆</p>
               <ul>
                 {this._getWonCompleteWagers(this.state.wagers).map(w => 
@@ -251,7 +252,7 @@ export class Dapp extends React.Component {
         <div className="row">
           <div className="col-12">
             <div>
-              <h2>Declined Wagers</h2>
+              <h4>Declined Wagers</h4>
               <p>Wagers You Declined</p>
               <ul>
                 {this._getSelfDeclinedWagers(this.state.wagers).map(w => 
@@ -541,7 +542,7 @@ export class Dapp extends React.Component {
     }
   }
 
-  async _provideWagerResponse(wagerId, wagerSize, response) {
+  _provideWagerResponse = async (wagerId, wagerSize, response) => {
     try {
       this._dismissTransactionError();
 
@@ -564,7 +565,7 @@ export class Dapp extends React.Component {
     }
   }
 
-  async _provideWagerVerdict(wagerId, verdict) {
+  _provideWagerVerdict = async (wagerId, verdict) => {
     try {
       this._dismissTransactionError();
 
@@ -600,6 +601,7 @@ export class Dapp extends React.Component {
   }
 
   _resetState() {
+    localStorage.clear();
     this.setState(this.initialState);
   }
 
