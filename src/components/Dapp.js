@@ -8,6 +8,7 @@ import ERC20Artifact from "../utils/ERC20Artifact.json";
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
+import { WagerItem } from "./WagerItem";
 // import { TransactionErrorMessage } from "./TransactionErrorMessage";
 // import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 
@@ -102,18 +103,15 @@ export class Dapp extends React.Component {
               <h2>You've been Challenged!</h2>
               <ul>
                 {this._getInboxWagers(this.state.wagers).map(w => 
-                  <li key={w.wagerId}>
-                    <div>{Number(w.wagerId)}</div>
-                    <div>{this.state.nicknames[w.address0] ? this.state.nicknames[w.address0] : w.address0}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
-                    <div>{w.description}</div>
-                      <button onClick={() => this._provideWagerResponse(Number(w.wagerId), w.wagerSize, 2)} >
-                        Accept Wager
-                      </button>
-                      <button onClick={() => this._provideWagerResponse(Number(w.wagerId), w.wagerSize, 1)} >
-                        Decline Wager
-                      </button>
-                  </li>
+                  <WagerItem 
+                    key={w.wagerId}
+                    w={w}  
+                    provideWagerResponse={() => this._provideWagerResponse()} 
+                    provideWagerVerdict={() => this._provideWagerVerdict()} 
+                    requiresResponse={true}
+                    requiresVerdict={false}
+                    nicknames={this.state.nicknames}
+                  />
                 )}
               </ul>
             </div>
@@ -121,7 +119,7 @@ export class Dapp extends React.Component {
         </div>
 
               <br />
-              
+
         <div className="row">
           <div className="col-12">
             <div>
