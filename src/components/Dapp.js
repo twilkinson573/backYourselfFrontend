@@ -66,15 +66,35 @@ export class Dapp extends React.Component {
           <div className="col-12">
             <h1>Back Yourself <span role='img' aria-label='money'>💸</span></h1>
             <p>The Wagering Dapp - challenge your friends with USDC in escrow, winner takes all!</p>
+            <br /> 
+            <h4>How to play:</h4>
+            <p>1. Challenge a friend to a wager irl or online, agree to the challenge & amount at stake</p>
+            <p>2. Create the wager below by escrowing your stake in USDC on the Polygon network</p>
+            <p>3. Your opponent may accept or decline the created wager. If they accept, they escrow a matching stake</p>
+            <p>4. The wager is now live, when the challenge is complete you both record the result of who won</p>
+            <p>5. The winner takes both stakes (minus a small 1% platform fee) and the glory of victory! <span role='img' aria-label='trophy'>🏆</span></p>
+            <br />
+            <p>Note! If the result of who won is contested a form of slashing takes place.</p>
+            <p>In these cases of foul play, the protocol keeps the stakes (and the bad loser probably never gets challenged again!)
+            </p>
           </div>
         </div>
+        <hr />
 
         <div className="row">
-          <div className="col-6">
+          <div className="col-12" style={{display: "flex", justifyContent: "center"}}>
+            <h4>💸💸💸 Your Career Winnings: ${ethers.utils.formatEther(this._getWonCompleteWagers(this.state.wagers).reduce((a, w) => a + w.wagerSize, 0))} 💸💸💸</h4>
+          </div>
+        </div>
+        <br />
+
+        <div className="row">
+          <div className="col-12">
             <h4>Your Nickname: {this.state.userNickname ? this.state.userNickname : " - "}</h4>
+            <p>Create a human-friendly nickname so your friends can recognise you easily</p>
             <div>
-              <input type="text" value={this.state.nicknameInput} onChange={e => this.setState({nicknameInput: e.target.value})} />
-              <button onClick={() => this._setUserNickname()} disabled={this.state.nicknameInput === ""} >
+              <input type="text" value={this.state.nicknameInput} maxLength='20' onChange={e => this.setState({nicknameInput: e.target.value})} />
+              <button className="btn btn-warning" onClick={() => this._setUserNickname()} disabled={this.state.nicknameInput === ""} >
                 Update Your Nickname
               </button>
             </div>
@@ -109,21 +129,22 @@ export class Dapp extends React.Component {
                 onChange={e => this.setState({newWagerDescriptionInput: e.target.value})} 
               />
               <br />
-              <button onClick={() => this._createWager(this.state.newWagerOpponentInput, this.state.newWagerSizeInput, this.state.newWagerDescriptionInput)} >
+              <button className="btn btn-warning" onClick={() => this._createWager(this.state.newWagerOpponentInput, this.state.newWagerSizeInput, this.state.newWagerDescriptionInput)} >
                 Create Your Wager!
               </button>
             </div>
           </div>
         </div>
         <br />
+        <hr />
 
         <div className="row">
           <div className="col-12">
             <div>
               <h4>You've been Challenged!</h4>
               <p>People have challenged you to the following wagers, you must now accept or decline</p>
-              <p>If you accept, you will be prompted to escrow your stake in USDC and the challenge will be live 🥊</p>
-              <ul>
+              <p>If you accept, you will be prompted to escrow your USDC stake and the challenge will become live 🥊</p>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getInboxWagers(this.state.wagers).map(w => 
                   <WagerItem 
                     key={w.wagerId}
@@ -144,7 +165,7 @@ export class Dapp extends React.Component {
           <div className="col-12">
             <div>
               <h4>Awaiting Opponent's Response</h4>
-              <ul>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getOutboxWagers(this.state.wagers).map(w => 
                   <WagerItem 
                     key={w.wagerId}
@@ -164,7 +185,7 @@ export class Dapp extends React.Component {
           <div className="col-12">
             <div>
               <h4>Active Wagers</h4>
-              <ul>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getActiveWagers(this.state.wagers).map(w => 
                   <WagerItem 
                     key={w.wagerId}
@@ -186,7 +207,7 @@ export class Dapp extends React.Component {
           <div className="col-12">
             <div>
               <h4>Awaiting Opponent's Verdict</h4>
-              <ul>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getAwaitingVerdictWagers(this.state.wagers).map(w => 
                   <WagerItem 
                     key={w.wagerId}
@@ -207,7 +228,7 @@ export class Dapp extends React.Component {
             <div>
               <h4>Complete Wagers</h4>
               <p>Wagers You Won - Your Glorious Pantheon of Success! 🏆</p>
-              <ul>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getWonCompleteWagers(this.state.wagers).map(w => 
                   <WagerItem 
                     key={w.wagerId}
@@ -220,7 +241,7 @@ export class Dapp extends React.Component {
               </ul>
               <br />
               <p>Wagers You Lost - Your Painful Graveyard of Defeat 😔</p>
-              <ul>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getLostCompleteWagers(this.state.wagers).map(w => 
                   <WagerItem 
                     key={w.wagerId}
@@ -233,7 +254,7 @@ export class Dapp extends React.Component {
               </ul>
               <br />
               <p>Disputed Wagers - Cases where the Result could not be Agreed 👮‍♂️</p>
-              <ul>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getDisputedCompleteWagers(this.state.wagers).map(w => 
                   <WagerItem 
                     key={w.wagerId}
@@ -254,7 +275,7 @@ export class Dapp extends React.Component {
             <div>
               <h4>Declined Wagers</h4>
               <p>Wagers You Declined</p>
-              <ul>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getSelfDeclinedWagers(this.state.wagers).map(w => 
                   <WagerItem 
                     key={w.wagerId}
@@ -267,7 +288,7 @@ export class Dapp extends React.Component {
               </ul>
               <br />
               <p>Wagers Opponents Declined</p>
-              <ul>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getOpponentDeclinedWagers(this.state.wagers).map(w => 
                   <WagerItem 
                     key={w.wagerId}
