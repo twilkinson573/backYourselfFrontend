@@ -8,6 +8,7 @@ import ERC20Artifact from "../utils/ERC20Artifact.json";
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
+import { WagerItem } from "./WagerItem";
 // import { TransactionErrorMessage } from "./TransactionErrorMessage";
 // import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 
@@ -16,7 +17,7 @@ const POLYGON_NETWORK_ID = '137';
 
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
-const WAGER_MANAGER_ADDRESS = "0x86D9573C91c221a9563C0f67f216430c074A56Fc";
+const WAGER_MANAGER_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
 
 export class Dapp extends React.Component {
   constructor(props) {
@@ -65,173 +66,243 @@ export class Dapp extends React.Component {
           <div className="col-12">
             <h1>Back Yourself <span role='img' aria-label='money'>💸</span></h1>
             <p>The Wagering Dapp - challenge your friends with USDC in escrow, winner takes all!</p>
-            <p>Your nickname is {this.state.userNickname}, lol</p>
+            <br /> 
+            <h4>How to play:</h4>
+            <p>1. Challenge a friend to a wager irl or online, agree to the challenge & amount at stake</p>
+            <p>2. Create the wager below by escrowing your stake in USDC on the Polygon network</p>
+            <p>3. Your opponent may accept or decline the created wager. If they accept, they escrow a matching stake</p>
+            <p>4. The wager is now live, when the challenge is complete you both record the result of who won</p>
+            <p>5. The winner takes both stakes (minus a small 1% platform fee) and the glory of victory! <span role='img' aria-label='trophy'>🏆</span></p>
+            <br />
+            <p>Note! If the result of who won is contested a form of slashing takes place.</p>
+            <p>In these cases of foul play, the protocol keeps the stakes (and the bad loser probably never gets challenged again!)
+            </p>
+          </div>
+        </div>
+        <hr />
+
+        <div className="row">
+          <div className="col-12" style={{display: "flex", justifyContent: "center"}}>
+            <h4>💸💸💸 Your Career Winnings: ${ethers.utils.formatEther(this._getWonCompleteWagers(this.state.wagers).reduce((a, w) => a + w.wagerSize, 0))} 💸💸💸</h4>
+          </div>
+        </div>
+        <br />
+
+        <div className="row">
+          <div className="col-12">
+            <h4>Your Nickname: {this.state.userNickname ? this.state.userNickname : " - "}</h4>
+            <p>Create a human-friendly nickname so your friends can recognise you easily</p>
             <div>
-              <input type="text" value={this.state.nicknameInput} onChange={e => this.setState({nicknameInput: e.target.value})} />
-              <button onClick={() => this._setUserNickname()} disabled={this.state.nicknameInput === ""} >
+              <input type="text" value={this.state.nicknameInput} maxLength='20' onChange={e => this.setState({nicknameInput: e.target.value})} />
+              <button className="btn btn-warning" onClick={() => this._setUserNickname()} disabled={this.state.nicknameInput === ""} >
                 Update Your Nickname
               </button>
             </div>
-            <br />
-            <div>
-              <input type="text" value={this.state.newWagerOpponentInput} onChange={e => this.setState({newWagerOpponentInput: e.target.value})} />
-              <input type="number" value={this.state.newWagerSizeInput} onChange={e => this.setState({newWagerSizeInput: e.target.value})} />
-              <input type="text" value={this.state.newWagerDescriptionInput} onChange={e => this.setState({newWagerDescriptionInput: e.target.value})} />
-              <button onClick={() => this._createWager(this.state.newWagerOpponentInput, this.state.newWagerSizeInput, this.state.newWagerDescriptionInput)}  >
-                Create Wager
+          </div>
+        </div>
+        <br />
+
+        <div className="row">
+          <div className="col-6">
+            <h4>Create a new Wager</h4>
+            <div style={{display:"flex", flexDirection:"column"}}>
+              <span>Paste your opponent's Polygon address</span>
+              <input 
+                type="text" 
+                placeholder="0x...."
+                value={this.state.newWagerOpponentInput} 
+                onChange={e => this.setState({newWagerOpponentInput: e.target.value})} 
+              />
+              <span>How much USDC are you each staking ($)</span>
+              <input 
+                type="number" 
+                min="1"
+                value={this.state.newWagerSizeInput} 
+                onChange={e => this.setState({newWagerSizeInput: e.target.value})} 
+              />
+              <span>Add a short description</span>
+              <input 
+                type="text" 
+                placeholder="Max 60 chars"
+                maxLength="60"
+                value={this.state.newWagerDescriptionInput} 
+                onChange={e => this.setState({newWagerDescriptionInput: e.target.value})} 
+              />
+              <br />
+              <button className="btn btn-warning" onClick={() => this._createWager(this.state.newWagerOpponentInput, this.state.newWagerSizeInput, this.state.newWagerDescriptionInput)} >
+                Create Your Wager!
               </button>
             </div>
-            <br />
+          </div>
+        </div>
+        <br />
+        <hr />
 
+        <div className="row">
+          <div className="col-12">
             <div>
-              <h2>You've been Challenged!</h2>
-              <ul>
+              <h4>You've been Challenged!</h4>
+              <p>People have challenged you to the following wagers, you must now accept or decline</p>
+              <p>If you accept, you will be prompted to escrow your USDC stake and the challenge will become live 🥊</p>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getInboxWagers(this.state.wagers).map(w => 
-                  <li key={w.wagerId}>
-                    <div>{Number(w.wagerId)}</div>
-                    <div>{this.state.nicknames[w.address1] ? this.state.nicknames[w.address1] : w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
-                    <div>{w.description}</div>
-                      <button onClick={() => this._provideWagerResponse(Number(w.wagerId), w.wagerSize, 2)} >
-                        Accept Wager
-                      </button>
-                      <button onClick={() => this._provideWagerResponse(Number(w.wagerId), w.wagerSize, 1)} >
-                        Decline Wager
-                      </button>
-                  </li>
+                  <WagerItem 
+                    key={w.wagerId}
+                    w={w}  
+                    nicknames={this.state.nicknames}
+                    requiresResponse={true}
+                    requiresVerdict={false}
+                    provideWagerResponse={this._provideWagerResponse} 
+                  />
                 )}
               </ul>
-              <br />
             </div>
+          </div>
+        </div>
+        <br />
 
+        <div className="row">
+          <div className="col-12">
             <div>
-              <h2>Awaiting Opponent's Response</h2>
-              <ul>
+              <h4>Awaiting Opponent's Response</h4>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getOutboxWagers(this.state.wagers).map(w => 
-                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
-                    <div>{Number(w.wagerId)}</div>
-                    <div style={{flexBasis: "70%"}}>{w.address1} {this.state.nicknames[w.address1]}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
-                    <div>{w.description}</div>
-                  </li>
+                  <WagerItem 
+                    key={w.wagerId}
+                    w={w}  
+                    nicknames={this.state.nicknames}
+                    requiresResponse={false}
+                    requiresVerdict={false}
+                  />
                 )}
               </ul>
-              <br />
             </div>
+          </div>
+        </div>
+        <br />
 
+        <div className="row">
+          <div className="col-12">
             <div>
-              <h2>Active Wagers</h2>
-              <ul>
+              <h4>Active Wagers</h4>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getActiveWagers(this.state.wagers).map(w => 
-                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
-                    <div>{Number(w.wagerId)}</div>
-                    <div>{w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
-                    <div>{w.description}</div>
-                    {(
-                      (w.address0.toLowerCase() === this.state.selectedAddress && w.address0Verdict === 0) || 
-                      (w.address1.toLowerCase() === this.state.selectedAddress && w.address1Verdict === 0)
-                    ) &&
-                      <div>
-                        <button onClick={() => this._provideWagerVerdict(Number(w.wagerId), 2)} >
-                          I Won!
-                        </button>
-                        <button onClick={() => this._provideWagerVerdict(Number(w.wagerId), 1)} >
-                          I Lost :(
-                        </button>
-                      </div>
-                    }
-                  </li>
+                  <WagerItem 
+                    key={w.wagerId}
+                    w={w}  
+                    nicknames={this.state.nicknames}
+                    requiresResponse={false}
+                    requiresVerdict={true}
+                    provideWagerVerdict={this._provideWagerVerdict} 
+                    selectedAddress={this.state.selectedAddress}
+                  />
                 )}
               </ul>
-              <br />
             </div>
+          </div>
+        </div>
+        <br />
 
+        <div className="row">
+          <div className="col-12">
             <div>
-              <h2>Awaiting Opponent's Verdict</h2>
-              <ul>
+              <h4>Awaiting Opponent's Verdict</h4>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getAwaitingVerdictWagers(this.state.wagers).map(w => 
-                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
-                    <div>{Number(w.wagerId)}</div>
-                    <div style={{flexBasis: "70%"}}>{w.address1} {this.state.nicknames[w.address1]}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize)}</div>
-                    <div>{w.description}</div>
-                  </li>
+                  <WagerItem 
+                    key={w.wagerId}
+                    w={w}  
+                    nicknames={this.state.nicknames}
+                    requiresResponse={false}
+                    requiresVerdict={false}
+                  />
                 )}
               </ul>
-              <br />
             </div>
+          </div>
+        </div>
+        <br />
 
+        <div className="row">
+          <div className="col-12">
             <div>
-              <h2>Complete Wagers</h2>
-              <p>Wagers You Won!</p>
-              <ul>
+              <h4>Complete Wagers</h4>
+              <p>Wagers You Won - Your Glorious Pantheon of Success! 🏆</p>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getWonCompleteWagers(this.state.wagers).map(w => 
-                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
-                    <div>{Number(w.wagerId)}</div>
-                    <div>{w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
-                    <div>{w.description}</div>
-                  </li>
+                  <WagerItem 
+                    key={w.wagerId}
+                    w={w}  
+                    nicknames={this.state.nicknames}
+                    requiresResponse={false}
+                    requiresVerdict={false}
+                  />
                 )}
               </ul>
               <br />
-              <p>Wagers You Lost :(</p>
-              <ul>
+              <p>Wagers You Lost - Your Painful Graveyard of Defeat 😔</p>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getLostCompleteWagers(this.state.wagers).map(w => 
-                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
-                    <div>{Number(w.wagerId)}</div>
-                    <div>{w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
-                    <div>{w.description}</div>
-                  </li>
+                  <WagerItem 
+                    key={w.wagerId}
+                    w={w}  
+                    nicknames={this.state.nicknames}
+                    requiresResponse={false}
+                    requiresVerdict={false}
+                  />
                 )}
               </ul>
               <br />
-              <p>Disputed Wagers</p>
-              <ul>
+              <p>Disputed Wagers - Cases where the Result could not be Agreed 👮‍♂️</p>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getDisputedCompleteWagers(this.state.wagers).map(w => 
-                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
-                    <div>{Number(w.wagerId)}</div>
-                    <div>{w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
-                    <div>{w.description}</div>
-                  </li>
+                  <WagerItem 
+                    key={w.wagerId}
+                    w={w}  
+                    nicknames={this.state.nicknames}
+                    requiresResponse={false}
+                    requiresVerdict={false}
+                  />
                 )}
               </ul>
-              <br />
             </div>
+          </div>
+        </div>
+        <br />
 
+        <div className="row">
+          <div className="col-12">
             <div>
-              <h2>Declined Wagers</h2>
+              <h4>Declined Wagers</h4>
               <p>Wagers You Declined</p>
-              <ul>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getSelfDeclinedWagers(this.state.wagers).map(w => 
-                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
-                    <div>{Number(w.wagerId)}</div>
-                    <div>{w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
-                    <div>{w.description}</div>
-                  </li>
+                  <WagerItem 
+                    key={w.wagerId}
+                    w={w}  
+                    nicknames={this.state.nicknames}
+                    requiresResponse={false}
+                    requiresVerdict={false}
+                  />
                 )}
               </ul>
               <br />
               <p>Wagers Opponents Declined</p>
-              <ul>
+              <ul style={{listStyle: 'none', paddingLeft: 0}}>
                 {this._getOpponentDeclinedWagers(this.state.wagers).map(w => 
-                  <li key={w.wagerId} style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
-                    <div>{Number(w.wagerId)}</div>
-                    <div>{w.address1}</div>
-                    <div>${ethers.utils.formatEther(w.wagerSize) * 2}</div>
-                    <div>{w.description}</div>
-                  </li>
+                  <WagerItem 
+                    key={w.wagerId}
+                    w={w}  
+                    nicknames={this.state.nicknames}
+                    requiresResponse={false}
+                    requiresVerdict={false}
+                  />
                 )}
               </ul>
-              <br />
             </div>
-
           </div>
         </div>
+
       </div>
     );
   }
@@ -444,6 +515,7 @@ export class Dapp extends React.Component {
       if (receipt.status === 0) { throw new Error("Transaction failed") };
 
       await this._fetchUserNickname();
+      this.setState({ nicknameInput: "" });
     } catch (error) {
       if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) { return };
       console.error(error);
@@ -491,7 +563,7 @@ export class Dapp extends React.Component {
     }
   }
 
-  async _provideWagerResponse(wagerId, wagerSize, response) {
+  _provideWagerResponse = async (wagerId, wagerSize, response) => {
     try {
       this._dismissTransactionError();
 
@@ -514,7 +586,7 @@ export class Dapp extends React.Component {
     }
   }
 
-  async _provideWagerVerdict(wagerId, verdict) {
+  _provideWagerVerdict = async (wagerId, verdict) => {
     try {
       this._dismissTransactionError();
 
@@ -550,11 +622,12 @@ export class Dapp extends React.Component {
   }
 
   _resetState() {
+    localStorage.clear();
     this.setState(this.initialState);
   }
 
   _checkNetwork() {
-    if (window.ethereum.networkVersion === POLYGON_NETWORK_ID) { return true };
+    if (window.ethereum.networkVersion === HARDHAT_NETWORK_ID) { return true };
     this.setState({ networkError: 'Please connect Metamask to Polygon' });
 
     return false;
