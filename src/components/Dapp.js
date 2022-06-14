@@ -17,7 +17,7 @@ const POLYGON_NETWORK_ID = '137';
 
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
-const WAGER_MANAGER_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
+const WAGER_MANAGER_ADDRESS = "0x86D9573C91c221a9563C0f67f216430c074A56Fc";
 
 export class Dapp extends React.Component {
   constructor(props) {
